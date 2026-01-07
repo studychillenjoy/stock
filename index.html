@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockTrade Pro - Ultimate Trading Terminal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+         :root {
+            --primary: #1a73e8;
+            --success: #0f9d58;
+            --danger: #db4437;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f7fa;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6c757d;
+            --border-color: #dee2e6;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --text-primary: #ffffff;
+            --text-secondary: #a8b2d1;
+            --border-color: #2d3748;
+        }
+        
+        * {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: none;
+        }
+        
+        .navbar-custom {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .sidebar {
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            height: calc(100vh - 56px);
+            position: sticky;
+            top: 56px;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .ticker-tape {
+            background: var(--bg-primary);
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .ticker-content {
+            display: inline-block;
+            animation: scroll 40s linear infinite;
+        }
+        
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+        
+        .ticker-item {
+            display: inline-block;
+            margin: 0 25px;
+            font-size: 0.9rem;
+        }
+        
+        .stock-card {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        
+        .stock-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .price-up {
+            color: var(--success) !important;
+        }
+        
+        .price-down {
+            color: var(--danger) !important;
+        }
+        
+        .chart-container {
+            background: var(--bg-primary);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 350px;
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .heatmap-cell {
+            display: inline-block;
+            width: 85px;
+            height: 85px;
+            margin: 4px;
+            border-radius: 6px;
+            text-align: center;
+            padding-top: 20px;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .alert-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .transaction-item {
+            border-left: 4px solid var(--primary);
+            padding: 10px;
+            margin-bottom: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            z-index: 100;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .search-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .search-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .kbd-shortcut {
+            background: var(--bg-secondary);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Login -->
+    <div id="loginPage" class="login-container">
+        <div class="login-card">
+            <div class="p-4 text-center bg-primary text-white">
+                <h3>📈 StockTrade Pro</h3>
+                <p class="mb-0">Unified Advanced Terminal</p>
+            </div>
+            <div class="p-4">
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" class="form-control" id="loginEmail" value="user@demo.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Password</label>
+                        <input type="password" class="form-control" id="loginPassword" value="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Access Terminal</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="appContainer" class="app-container">
+        <div class="ticker-tape">
+            <div class="ticker-content" id="tickerContent"></div>
+        </div>
+
+        <nav class="navbar navbar-expand-lg navbar-custom">
+            <div class="container-fluid">
+                <span class="navbar-brand fw-bold">📈 StockTrade Pro</span>
+                <div class="d-flex align-items-center">
+                    <span class="me-3">Theme: <span style="cursor:pointer;" onclick="toggleTheme()" id="themeIcon">🌙</span></span>
+                    <div class="position-relative me-3" style="cursor:pointer;" onclick="showSection('alerts')">
+                        🔔 <span class="alert-badge" id="alertCount">0</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="location.reload()">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar -->
+                <div class="col-md-2 sidebar d-none d-md-block">
+                    <div class="d-grid gap-1">
+                        <button class="btn btn-sm text-start btn-outline-primary border-0" onclick="showSection('dashboard')">🏠 Dashboard</button>
+                        <button class="btn btn-sm text-start btn-outline-primary border-0" onclick="showSection('search')">🔍 Search & Screener</button>
+                        <button class="btn btn-sm text-start btn-outline-primary border-0" onclick="showSection('portfolio')">💼 My Portfolio</button>
+                        <button class="btn btn-sm text-start btn-outline-primary border-0" onclick="showSection('analytics')">📊 Analytics</button>
+                        <button class="btn btn-sm text-start btn-outline-primary border-0" onclick="showSection('history')">📜 Trade History</button>
+                        <button class="btn btn-sm text-start btn-outline-primary border-0" onclick="showSection('orders')">📋 Open Orders</button>
+                        <button class="btn btn-sm text-start btn-outline-primary border-0" onclick="showSection('compare')">⚖️ Compare Stocks</button>
+                        <button class="btn btn-sm text-start btn-outline-primary border-0" onclick="showSection('heatmap')">🌡️ Heatmap</button>
+                        <button class="btn btn-sm text-start btn-outline-primary border-0" onclick="showSection('social')">💬 Social Feed</button>
+                        <button class="btn btn-sm text-start btn-outline-primary border-0" onclick="showSection('bot')">🤖 Trading Bot</button>
+                    </div>
+                    <hr>
+                    <div class="small text-muted">
+                        <div><span class="kbd-shortcut">B</span> Buy Order</div>
+                        <div><span class="kbd-shortcut">D</span> Dashboard</div>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="col-md-10 p-4">
+
+                    <!-- Dashboard -->
+                    <div id="dashboardSection" class="content-section">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="balance-card">
+                                    <small>Total Portfolio Value</small>
+                                    <h2 id="totalBalance">$50,000.00</h2>
+                                    <div class="d-flex justify-content-between mt-3">
+                                        <span>Cash: <br><strong id="cashBalance">$50,000</strong></span>
+                                        <span>Invested: <br><strong id="investedBalance">$0</strong></span>
+                                    </div>
+                                    <div class="mt-2 small">Daily P&L: <span id="dailyPL">+$0.00</span></div>
+                                </div>
+                                <div class="chart-container" style="max-height: 250px; overflow-y: auto;">
+                                    <h6>Live News Feed</h6>
+                                    <div id="newsFeed" class="small"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="chart-container">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <h5 id="chartTitle">Market View: AAPL</h5>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="setChartType('line')">Line</button>
+                                            <button class="btn btn-outline-primary" onclick="setChartType('candlestick')">Candle</button>
+                                            <button class="btn btn-outline-primary" onclick="setChartType('area')">Area</button>
+                                        </div>
+                                    </div>
+                                    <canvas id="mainChart"></canvas>
+                                    <div class="mt-2 small">
+                                        <input type="checkbox" id="checkMA" onchange="drawChart()"> MA(20)
+                                        <input type="checkbox" id="checkEMA" onchange="drawChart()" class="ms-2"> EMA(10)
+                                        <input type="checkbox" id="checkBB" onchange="drawChart()" class="ms-2"> Bollinger
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="topStocksGrid"></div>
+                    </div>
+
+                    <!-- Search / Screener -->
+                    <div id="searchSection" class="content-section" style="display:none;">
+                        <h3>Screener & Filter</h3>
+                        <div class="stock-card">
+                            <div class="row g-2">
+                                <div class="col-md-4 position-relative">
+                                    <input type="text" class="form-control" id="stockSearchInput" placeholder="Search symbol...">
+                                    <div id="searchDropdown" class="search-results" style="display:none;"></div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="filterSector">
+                                        <option value="All">All Sectors</option>
+                                        <option value="Technology">Technology</option>
+                                        <option value="Finance">Finance</option>
+                                        <option value="Consumer">Consumer</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="filterPerf">
+                                        <option value="all">Any Performance</option>
+                                        <option value="gainers">Top Gainers</option>
+                                        <option value="losers">Top Losers</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-primary w-100" onclick="applyScreener()">Apply</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3" id="screenerResults"></div>
+                    </div>
+
+                    <!-- Portfolio -->
+                    <div id="portfolioSection" class="content-section" style="display:none;">
+                        <div class="d-flex justify-content-between">
+                            <h3>My Holdings</h3>
+                            <button class="btn btn-sm btn-success" onclick="exportCSV()">📥 Export CSV</button>
+                        </div>
+                        <div id="portfolioList" class="mt-3"></div>
+                    </div>
+
+                    <!-- History -->
+                    <div id="historySection" class="content-section" style="display:none;">
+                        <h3>Trade History</h3>
+                        <div id="historyLog"></div>
+                    </div>
+
+                    <!-- Open Orders -->
+                    <div id="ordersSection" class="content-section" style="display:none;">
+                        <h3>Active Limit/Stop Orders</h3>
+                        <table class="table bg-white rounded shadow-sm">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Price</th>
+                                    <th>Qty</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="openOrdersList"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Compare -->
+                    <div id="compareSection" class="content-section" style="display:none;">
+                        <h3>Compare Stocks</h3>
+                        <div class="stock-card" id="compareSelector"></div>
+                        <div id="compareTable" class="mt-3"></div>
+                    </div>
+
+                    <!-- Heatmap -->
+                    <div id="heatmapSection" class="content-section" style="display:none;">
+                        <h3>Market Heatmap</h3>
+                        <div id="heatmapGrid" class="text-center p-4 bg-white rounded shadow-sm"></div>
+                    </div>
+
+                    <!-- Social -->
+                    <div id="socialSection" class="content-section" style="display:none;">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h3>Community Feed</h3>
+                                <div id="socialFeed"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stock-card">
+                                    <h6>Post Update</h6>
+                                    <textarea id="postContent" class="form-control mb-2" rows="3" placeholder="What's your trade?"></textarea>
+                                    <button class="btn btn-primary w-100" onclick="addPost()">Post</button>
+                                </div>
+                                <div class="stock-card mt-3">
+                                    <h6>Leaderboard</h6>
+                                    <div id="leaderboard" class="small"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trading Bot -->
+                    <div id="botSection" class="content-section" style="display:none;">
+                        <h3>Algorithmic Trading Bot</h3>
+                        <div class="stock-card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5>Status: <span id="botStatusBadge" class="badge bg-danger">OFFLINE</span></h5>
+                                <button id="botToggleBtn" class="btn btn-success" onclick="toggleBot()">Start Bot</button>
+                            </div>
+                            <hr>
+                            <label>Strategy</label>
+                            <select class="form-select mb-3" id="botStrategy">
+                                <option value="ma">MA Crossover (Conservative)</option>
+                                <option value="rsi">RSI Mean Reversion (Moderate)</option>
+                                <option value="momentum">Momentum Chase (Aggressive)</option>
+                            </select>
+                            <label>Max Budget Per Trade ($)</label>
+                            <input type="number" id="botBudget" class="form-control mb-3" value="1000">
+                            <p class="text-muted small">The bot will automatically execute market orders based on technical indicators.</p>
+                        </div>
+                    </div>
+
+                    <!-- Alerts -->
+                    <div id="alertsSection" class="content-section" style="display:none;">
+                        <h3>Price Alerts</h3>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="stock-card">
+                                    <h6>Set Price Alert</h6>
+                                    <input type="text" id="alertSym" class="form-control mb-2" placeholder="Symbol (e.g. TSLA)">
+                                    <input type="number" id="alertPrice" class="form-control mb-2" placeholder="Target Price">
+                                    <select id="alertType" class="form-select mb-2">
+                                        <option value="above">Price Above</option>
+                                        <option value="below">Price Below</option>
+                                    </select>
+                                    <button class="btn btn-primary w-100" onclick="setAlert()">Add Alert</button>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div id="activeAlerts" class="stock-card"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trade Modal -->
+    <div class="modal fade" id="tradeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-light">
+                <div class="modal-header border-0">
+                    <h5 id="modalSym">AAPL</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <h2 id="modalPrice">$0.00</h2>
+                        <span id="modalChange">0.00%</span>
+                    </div>
+                    <div class="mb-3">
+                        <label>Order Type</label>
+                        <select class="form-select" id="orderType" onchange="toggleLimitInput()">
+                            <option value="market">Market Order</option>
+                            <option value="limit">Limit Order</option>
+                            <option value="stop">Stop-Loss Order</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="limitInputDiv" style="display:none;">
+                        <label>Trigger Price</label>
+                        <input type="number" id="orderTriggerPrice" class="form-control" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label>Quantity</label>
+                        <input type="number" id="orderQty" class="form-control" value="1" min="1">
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total Estimate:</span>
+                        <span id="orderTotal">$0.00</span>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-success flex-grow-1" onclick="submitTrade('buy')">BUY</button>
+                    <button class="btn btn-danger flex-grow-1" onclick="submitTrade('sell')">SELL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- Data Definitions ---
+        let user = {
+            cash: 50000,
+            portfolio: {}, // { AAPL: { qty: 10, avgPrice: 150 } }
+            history: [],
+            orders: [],
+            alerts: [],
+            posts: [{
+                user: "TradeWhiz",
+                text: "Bullish on NVDA earnings next week!",
+                time: "2m ago"
+            }, {
+                user: "StockPro",
+                text: "Just closed my AAPL position with 15% profit.",
+                time: "15m ago"
+            }]
+        };
+
+        const stocks = [{
+            symbol: 'AAPL',
+            name: 'Apple Inc.',
+            price: 175.20,
+            change: 1.2,
+            sector: 'Technology',
+            history: []
+        }, {
+            symbol: 'MSFT',
+            name: 'Microsoft',
+            price: 390.45,
+            change: 2.1,
+            sector: 'Technology',
+            history: []
+        }, {
+            symbol: 'GOOGL',
+            name: 'Alphabet',
+            price: 145.10,
+            change: -0.5,
+            sector: 'Technology',
+            history: []
+        }, {
+            symbol: 'TSLA',
+         
